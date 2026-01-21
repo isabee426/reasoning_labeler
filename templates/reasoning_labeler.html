@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reasoning Correctness Labeler - V11 Analysis</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-shadow: 0 2px 10px rgba(74, 158, 255, 0.3);
+        }
+        .stats-bar {
+            background: rgba(42, 42, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a9eff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+        .puzzle-list {
+            background: rgba(42, 42, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .puzzle-list h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        .puzzle-section {
+            margin-bottom: 25px;
+        }
+        .puzzle-section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4a9eff;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(74, 158, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .puzzle-section-title.correct {
+            color: #4caf50;
+            border-bottom-color: rgba(76, 175, 80, 0.3);
+        }
+        .puzzle-section-title.incorrect {
+            color: #f44336;
+            border-bottom-color: rgba(244, 67, 54, 0.3);
+        }
+        .puzzle-section-title.unlabeled {
+            color: #aaa;
+            border-bottom-color: rgba(170, 170, 170, 0.3);
+        }
+        .puzzle-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(51, 51, 51, 0.6);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .puzzle-item:hover {
+            background: rgba(74, 158, 255, 0.2);
+            border-color: rgba(74, 158, 255, 0.5);
+        }
+        .puzzle-item.active {
+            background: rgba(74, 158, 255, 0.3);
+            border-color: #4a9eff;
+        }
+        .puzzle-item.correct {
+            border-left: 4px solid #4caf50;
+        }
+        .puzzle-item.incorrect {
+            border-left: 4px solid #f44336;
+        }
+        .puzzle-id {
+            font-weight: bold;
+            color: #fff;
+        }
+        .puzzle-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        .main-content {
+            background: rgba(42, 42, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .puzzle-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .puzzle-title {
+            font-size: 28px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .puzzle-metrics {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .metric {
+            background: rgba(51, 51, 51, 0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #aaa;
+        }
+        .metric-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4a9eff;
+        }
+        .examples-section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(74, 158, 255, 0.3);
+        }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .example-card {
+            background: rgba(51, 51, 51, 0.6);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .example-title {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+        .grid-pair {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .grid-container {
+            flex: 1;
+            text-align: center;
+        }
+        .grid-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        .grid-image {
+            max-width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            background: #000;
+        }
+        .arrow {
+            font-size: 24px;
+            color: #4a9eff;
+        }
+        .steps-section {
+            margin-bottom: 40px;
+        }
+        .step-item {
+            background: rgba(51, 51, 51, 0.6);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4a9eff;
+        }
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .step-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4a9eff;
+        }
+        .step-type {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+        }
+        .step-type.observe {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        .step-instruction {
+            color: #e0e0e0;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        .step-condition {
+            font-size: 12px;
+            color: #aaa;
+            font-style: italic;
+        }
+        .labeling-section {
+            position: sticky;
+            bottom: 0;
+            background: rgba(42, 42, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .labeling-header {
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            background: rgba(74, 158, 255, 0.1);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .labeling-header:hover {
+            background: rgba(74, 158, 255, 0.2);
+        }
+        #labeling-content {
+            display: none;
+        }
+        .label-buttons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .label-btn {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: none;
+            font-size: 80px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            font-weight: bold;
+        }
+        .label-btn.correct {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+        }
+        .label-btn.correct:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        }
+        .label-btn.incorrect {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        .label-btn.incorrect:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.5);
+        }
+        .label-btn.skipped {
+            background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+            color: white;
+        }
+        .label-btn.skipped:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(158, 158, 158, 0.5);
+        }
+        .label-btn.active {
+            border: 6px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.7);
+            transform: scale(1.05);
+        }
+        .label-btn:active {
+            transform: scale(0.95);
+        }
+        .reasoning-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            background: rgba(51, 51, 51, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .reasoning-input:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+        .current-label {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .current-label.correct {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+        .current-label.incorrect {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        .current-label.skipped {
+            background: rgba(158, 158, 158, 0.2);
+            color: #9e9e9e;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #aaa;
+        }
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        .failure-mode-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #f44336;
+        }
+        .failure-mode-checkbox:checked {
+            accent-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reasoning Correctness Labeler</h1>
+        
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Puzzles</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-labeled">0</div>
+                <div class="stat-label">Labeled</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-correct">0</div>
+                <div class="stat-label">Correct</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-incorrect">0</div>
+                <div class="stat-label">Incorrect</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-skipped">0</div>
+                <div class="stat-label">Skipped</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-completion">0%</div>
+                <div class="stat-label">Completion</div>
+            </div>
+        </div>
+
+        <div class="layout">
+            <div class="puzzle-list">
+                <h2>Puzzles</h2>
+                <div id="puzzle-list-container">
+                    <div class="loading">Loading puzzles...</div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div id="puzzle-content">
+                    <div class="empty-state">
+                        <h2>Loading puzzles...</h2>
+                        <p>Preparing puzzle data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let puzzles = [];
+        let currentPuzzle = null;
+        let labels = {};
+        let loadedPuzzles = []; // Track puzzles currently loaded in this batch
+        let loadedPuzzleData = {}; // Store full puzzle data: puzzle_id -> puzzle data
+        let selectedPuzzles = new Set(); // Track selected puzzle IDs
+        let currentOffset = 0;
+        let hasMorePuzzles = true;
+        let currentPuzzleIndex = -1; // Index of current puzzle in loadedPuzzles
+        let nextPuzzlePreloaded = null; // Preloaded next puzzle data
+
+        // Load puzzles and stats
+        async function loadPuzzles() {
+            try {
+                // Load all puzzles for the sidebar (still needed for stats)
+                const response = await fetch('/api/puzzles');
+                puzzles = await response.json();
+                renderPuzzleList();
+                loadStats();
+            } catch (error) {
+                console.error('Error loading puzzles:', error);
+            }
+        }
+        
+        async function loadNextPuzzle() {
+            try {
+                const response = await fetch(`/api/puzzles/unlabeled?limit=1&offset=${currentOffset}`);
+                const data = await response.json();
+                
+                if (data.puzzles && data.puzzles.length > 0) {
+                    const puzzleMeta = data.puzzles[0];
+                    hasMorePuzzles = data.has_more;
+                    
+                    // Load the full puzzle data
+                    await loadPuzzleData(puzzleMeta.file_path);
+                    const puzzle = loadedPuzzleData[puzzleMeta.puzzle_id];
+                    
+                    if (puzzle) {
+                        currentPuzzle = puzzle;
+                        currentPuzzleIndex = 0;
+                        loadedPuzzles = [puzzleMeta];
+                        renderPuzzle(puzzle);
+                    }
+                } else {
+                    // No more unlabeled puzzles
+                    hasMorePuzzles = false;
+                    currentPuzzle = null;
+                    document.getElementById('puzzle-content').innerHTML = `
+                        <div class="empty-state">
+                            <h2>All puzzles labeled!</h2>
+                            <p>You've completed labeling all puzzles. Great work!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading puzzle:', error);
+            }
+        }
+        
+        async function preloadNextPuzzle() {
+            if (!hasMorePuzzles || nextPuzzlePreloaded) return; // Already preloaded or no more puzzles
+            
+            try {
+                const nextOffset = currentOffset + 1;
+                const response = await fetch(`/api/puzzles/unlabeled?limit=1&offset=${nextOffset}`);
+                const data = await response.json();
+                
+                if (data.puzzles && data.puzzles.length > 0) {
+                    const puzzleMeta = data.puzzles[0];
+                    // Preload the puzzle data
+                    const response2 = await fetch(`/api/puzzle/${encodeURIComponent(puzzleMeta.file_path)}`);
+                    const puzzle = await response2.json();
+                    
+                    if (!puzzle.error) {
+                        nextPuzzlePreloaded = {
+                            meta: puzzleMeta,
+                            data: puzzle
+                        };
+                        console.log('Next puzzle preloaded:', puzzleMeta.puzzle_id);
+                    }
+                } else {
+                    hasMorePuzzles = false;
+                }
+            } catch (error) {
+                console.error('Error preloading next puzzle:', error);
+            }
+        }
+        
+        async function loadPuzzleData(filePath) {
+            try {
+                const response = await fetch(`/api/puzzle/${encodeURIComponent(filePath)}`);
+                const puzzle = await response.json();
+                if (!puzzle.error) {
+                    loadedPuzzleData[puzzle.puzzle_id] = puzzle;
+                }
+            } catch (error) {
+                console.error('Error loading puzzle data:', error);
+            }
+        }
+        
+        function renderBatchView() {
+            const container = document.getElementById('puzzle-content');
+            const selectedCount = selectedPuzzles.size;
+            
+            let html = `
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(74, 158, 255, 0.1); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>Batch ${Math.floor(currentOffset / 5) + 1}</strong> - ${loadedPuzzles.length} puzzle${loadedPuzzles.length !== 1 ? 's' : ''} loaded
+                        ${selectedCount > 0 ? ` | ${selectedCount} selected` : ''}
+                    </div>
+                    ${selectedCount > 0 ? `
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" onclick="labelSelectedPuzzles('correct')" 
+                                style="padding: 8px 16px; background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.5); border-radius: 6px; color: #4caf50; cursor: pointer; font-weight: bold;">
+                            Label ${selectedCount} as Correct
+                        </button>
+                        <button type="button" onclick="labelSelectedPuzzles('incorrect')" 
+                                style="padding: 8px 16px; background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.5); border-radius: 6px; color: #f44336; cursor: pointer; font-weight: bold;">
+                            Label ${selectedCount} as Incorrect
+                        </button>
+                        <button type="button" onclick="clearSelection()" 
+                                style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #aaa; cursor: pointer;">
+                            Clear Selection
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+            `;
+            
+            for (const puzzle of loadedPuzzles) {
+                const puzzleData = loadedPuzzleData[puzzle.puzzle_id];
+                const isSelected = selectedPuzzles.has(puzzle.puzzle_id);
+                const hasData = puzzleData !== undefined;
+                
+                html += `
+                    <div class="puzzle-card" style="border: 2px solid ${isSelected ? '#4a9eff' : 'rgba(255, 255, 255, 0.1)'}; border-radius: 8px; padding: 15px; background: rgba(255, 255, 255, 0.05); cursor: pointer;" 
+                         onclick="togglePuzzleSelection('${puzzle.puzzle_id}')">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                                   onclick="event.stopPropagation(); togglePuzzleSelection('${puzzle.puzzle_id}')"
+                                   style="width: 18px; height: 18px; cursor: pointer;">
+                            <strong style="font-size: 16px;">${puzzle.puzzle_id}</strong>
+                            ${puzzle.label ? `<span style="padding: 4px 8px; background: ${puzzle.label === 'correct' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)'}; border-radius: 4px; font-size: 11px; color: ${puzzle.label === 'correct' ? '#4caf50' : '#f44336'};">
+                                ${puzzle.label.toUpperCase()}
+                            </span>` : ''}
+                        </div>
+                        ${hasData ? `
+                        <div style="font-size: 12px; color: #aaa; margin-bottom: 10px;">
+                            Training: ${(puzzleData.summary.training_accuracy * 100).toFixed(1)}% | 
+                            Test: ${puzzleData.summary.test_accuracy !== null ? (puzzleData.summary.test_accuracy * 100).toFixed(1) + '%' : 'N/A'} | 
+                            Steps: ${puzzleData.summary.num_general_steps}
+                        </div>
+                        <button type="button" onclick="event.stopPropagation(); loadPuzzle('${puzzle.file_path}')" 
+                                style="width: 100%; padding: 8px; background: rgba(74, 158, 255, 0.2); border: 1px solid rgba(74, 158, 255, 0.5); border-radius: 6px; color: #4a9eff; cursor: pointer;">
+                            View Details
+                        </button>
+                        ` : `
+                        <div style="color: #aaa; font-size: 12px;">Loading...</div>
+                        `}
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+        
+        function togglePuzzleSelection(puzzleId) {
+            if (selectedPuzzles.has(puzzleId)) {
+                selectedPuzzles.delete(puzzleId);
+            } else {
+                selectedPuzzles.add(puzzleId);
+            }
+            renderBatchView();
+        }
+        
+        function clearSelection() {
+            selectedPuzzles.clear();
+            renderBatchView();
+        }
+        
+        async function labelSelectedPuzzles(label) {
+            if (selectedPuzzles.size === 0) return;
+            
+            const puzzleIds = Array.from(selectedPuzzles);
+            let successCount = 0;
+            
+            for (const puzzleId of puzzleIds) {
+                const puzzle = loadedPuzzles.find(p => p.puzzle_id === puzzleId);
+                const puzzleData = loadedPuzzleData[puzzleId];
+                
+                if (!puzzle || !puzzleData) continue;
+                
+                try {
+                    const response = await fetch('/api/label', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            puzzle_id: puzzleId,
+                            label: label,
+                            reasoning: '',
+                            failure_modes: [],
+                            file_path: puzzle.file_path || ''
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        successCount++;
+                        // Update puzzle in batch
+                        puzzle.label = label;
+                        puzzleData.current_label = label;
+                    }
+                } catch (error) {
+                    console.error(`Error labeling ${puzzleId}:`, error);
+                }
+            }
+            
+            showNotification(`Labeled ${successCount} puzzle${successCount !== 1 ? 's' : ''} as ${label}`, 'success');
+            
+            // Clear selection and refresh
+            selectedPuzzles.clear();
+            renderBatchView();
+            renderPuzzleList();
+            loadStats();
+            
+            // Check if all labeled, load next batch
+            if (checkIfAllLabeled() && hasMorePuzzles) {
+                setTimeout(() => {
+                    currentOffset += 5;
+                    loadNextBatch();
+                }, 500);
+            }
+        }
+        
+        function getNextUnlabeledPuzzle() {
+            // Get next puzzle from current batch
+            if (loadedPuzzles.length === 0) return null;
+            
+            const unlabeled = loadedPuzzles.filter(p => !p.label);
+            if (unlabeled.length > 0) {
+                return unlabeled[0];
+            }
+            
+            return null; // All in current batch are labeled
+        }
+        
+        function checkIfAllLabeled() {
+            // Check if all puzzles in current batch are labeled
+            return loadedPuzzles.length > 0 && loadedPuzzles.every(p => p.label);
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                document.getElementById('stat-total').textContent = stats.total_puzzles;
+                document.getElementById('stat-labeled').textContent = stats.total_labeled;
+                document.getElementById('stat-correct').textContent = stats.correct;
+                document.getElementById('stat-incorrect').textContent = stats.incorrect;
+                document.getElementById('stat-skipped').textContent = stats.skipped || 0;
+                document.getElementById('stat-completion').textContent = Math.round(stats.completion_rate) + '%';
+                
+                // Show failure mode breakdown in console or could add to UI
+                if (stats.failure_modes) {
+                    const totalFailures = Object.values(stats.failure_modes).reduce((a, b) => a + b, 0);
+                    if (totalFailures > 0) {
+                        console.log('Failure Mode Breakdown:', stats.failure_modes);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function renderPuzzleList() {
+            const container = document.getElementById('puzzle-list-container');
+            if (puzzles.length === 0) {
+                container.innerHTML = '<div class="empty-state">No puzzles found</div>';
+                return;
+            }
+
+            // Group puzzles by label
+            const unlabeled = [];
+            const correct = [];
+            const incorrect = [];
+            const skipped = [];
+            
+            puzzles.forEach(puzzle => {
+                if (!puzzle.label) {
+                    unlabeled.push(puzzle);
+                } else if (puzzle.label === 'correct') {
+                    correct.push(puzzle);
+                } else if (puzzle.label === 'incorrect') {
+                    incorrect.push(puzzle);
+                } else if (puzzle.label === 'skipped') {
+                    skipped.push(puzzle);
+                }
+            });
+
+            // Render each section
+            let html = '';
+            
+            // Unlabeled section
+            if (unlabeled.length > 0) {
+                html += `<div class="puzzle-section">
+                    <div class="puzzle-section-title unlabeled">Unlabeled (${unlabeled.length})</div>
+                    ${unlabeled.map(puzzle => renderPuzzleItem(puzzle)).join('')}
+                </div>`;
+            }
+            
+            // Correct section
+            if (correct.length > 0) {
+                html += `<div class="puzzle-section">
+                    <div class="puzzle-section-title correct">Correct (${correct.length})</div>
+                    ${correct.map(puzzle => renderPuzzleItem(puzzle)).join('')}
+                </div>`;
+            }
+            
+            // Incorrect section
+            if (incorrect.length > 0) {
+                html += `<div class="puzzle-section">
+                    <div class="puzzle-section-title incorrect">Incorrect (${incorrect.length})</div>
+                    ${incorrect.map(puzzle => renderPuzzleItem(puzzle)).join('')}
+                </div>`;
+            }
+            
+            // Skipped section
+            if (skipped.length > 0) {
+                html += `<div class="puzzle-section">
+                    <div class="puzzle-section-title" style="color: #9e9e9e; border-bottom-color: rgba(158, 158, 158, 0.3);">Skipped (${skipped.length})</div>
+                    ${skipped.map(puzzle => renderPuzzleItem(puzzle)).join('')}
+                </div>`;
+            }
+            
+            container.innerHTML = html || '<div class="empty-state">No puzzles found</div>';
+        }
+
+        function renderPuzzleItem(puzzle) {
+                const labelClass = puzzle.label || '';
+                const activeClass = currentPuzzle && currentPuzzle.puzzle_id === puzzle.puzzle_id ? 'active' : '';
+            const autoDetected = puzzle.auto_detected ? ' (Auto)' : '';
+            const reviewer = puzzle.reviewer === 'auto_detector' ? '🤖' : '';
+            const escapedPath = puzzle.file_path.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const duplicatesNote = puzzle.num_duplicates > 0 ? ` <small style="opacity: 0.6; font-size: 10px;">(${puzzle.num_duplicates} more)</small>` : '';
+                return `
+                <div class="puzzle-item ${labelClass} ${activeClass}" onclick="loadPuzzle('${escapedPath}')" style="cursor: pointer;">
+                    <div class="puzzle-id">${puzzle.puzzle_id} ${reviewer}${duplicatesNote}</div>
+                        <div class="puzzle-label">
+                        ${puzzle.label ? puzzle.label.toUpperCase() + autoDetected : 'Unlabeled'}
+                        </div>
+                    </div>
+                `;
+        }
+
+        async function loadPuzzle(filePath) {
+            try {
+                const response = await fetch(`/api/puzzle/${encodeURIComponent(filePath)}`);
+                const puzzle = await response.json();
+                
+                if (puzzle.error) {
+                    alert('Error loading puzzle: ' + puzzle.error);
+                    return;
+                }
+
+                currentPuzzle = puzzle;
+                currentPuzzleIndex = 0;
+                nextPuzzlePreloaded = null; // Clear any preloaded puzzle
+                renderPuzzle(puzzle);
+                renderPuzzleList(); // Update active state
+                
+                // Preload next puzzle in background
+                if (hasMorePuzzles) {
+                    preloadNextPuzzle();
+                }
+            } catch (error) {
+                console.error('Error loading puzzle:', error);
+                alert('Error loading puzzle: ' + error.message);
+            }
+        }
+
+        async function navigateDuplicateVersion(direction, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            
+            if (!currentPuzzle || !currentPuzzle.duplicate_versions || currentPuzzle.duplicate_versions.length <= 1) {
+                return;
+            }
+            
+            const currentIndex = currentPuzzle.current_duplicate_index || 0;
+            const newIndex = currentIndex + direction;
+            
+            // Check bounds
+            if (newIndex < 0 || newIndex >= currentPuzzle.duplicate_versions.length) {
+                return;
+            }
+            
+            // Load the new version
+            const newVersion = currentPuzzle.duplicate_versions[newIndex];
+            await loadPuzzle(newVersion.file_path);
+        }
+
+        function renderPuzzle(puzzle) {
+            const container = document.getElementById('puzzle-content');
+            
+            // Training examples - show input, expected output, and prediction
+            const trainingExamplesHtml = puzzle.training_examples.map((ex, idx) => {
+                const predictionImage = ex.prediction_image || null;
+                // Check if prediction matches expected output by comparing grid data
+                let matches = false;
+                if (predictionImage && ex.output && ex.prediction_grid) {
+                    matches = JSON.stringify(ex.output) === JSON.stringify(ex.prediction_grid);
+                }
+                
+                // Get training booklet for this example
+                const booklet = puzzle.training_booklets && puzzle.training_booklets[idx] ? puzzle.training_booklets[idx] : null;
+                const hasSteps = booklet && booklet.steps && booklet.steps.length > 0;
+                
+                return `
+                <div class="example-card" id="training-example-${idx}">
+                    <div class="example-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Training Example ${idx + 1}</span>
+                        <div style="display: flex; gap: 8px;">
+                            ${hasSteps ? `
+                            <button type="button" onclick="toggleTrainingSteps(${idx}, event)" 
+                                    style="padding: 4px 12px; font-size: 11px; background: rgba(255, 193, 7, 0.2); border: 1px solid rgba(255, 193, 7, 0.5); border-radius: 4px; color: #ffc107; cursor: pointer;">
+                                ${booklet.num_steps} Step${booklet.num_steps !== 1 ? 's' : ''}
+                            </button>
+                            ` : ''}
+                            <button type="button" class="show-predicted-input-btn" onclick="loadPredictedInput('${puzzle.file_path}', ${idx}, ${idx}, event)" style="padding: 4px 12px; font-size: 11px; background: rgba(74, 158, 255, 0.2); border: 1px solid rgba(74, 158, 255, 0.5); border-radius: 4px; color: #4a9eff; cursor: pointer;">
+                                Show Predicted Input
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid-pair" id="training-example-${idx}-grids">
+                        <div class="grid-container">
+                            <div class="grid-label">Input</div>
+                            <img src="data:image/png;base64,${ex.input_image}" class="grid-image" alt="Input">
+                        </div>
+                        <div class="arrow">→</div>
+                        <div class="grid-container">
+                            <div class="grid-label">Expected Output</div>
+                            <img src="data:image/png;base64,${ex.output_image}" class="grid-image" alt="Expected Output">
+                        </div>
+                        ${predictionImage ? `
+                        <div class="arrow">→</div>
+                        <div class="grid-container">
+                            <div class="grid-label">Prediction</div>
+                            <img src="data:image/png;base64,${predictionImage}" class="grid-image" alt="Prediction" style="${matches ? 'border: 3px solid #4caf50;' : 'border: 3px solid #ff9800;'}">
+                    </div>
+                        ` : ''}
+                </div>
+                    ${predictionImage && ex.output_image ? `
+                    <div style="margin-top: 10px; padding: 8px; background: ${matches ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'}; border-radius: 4px; font-size: 12px; color: ${matches ? '#4caf50' : '#ff9800'};">
+                        ${matches ? '✓ Prediction matches expected output' : '⚠ Prediction differs from expected output'}
+                    </div>
+                    ` : ''}
+                    ${hasSteps ? `
+                    <div id="training-example-${idx}-steps" style="display: none; margin-top: 20px; padding: 15px; background: rgba(255, 193, 7, 0.05); border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.2);">
+                        <div style="font-weight: bold; margin-bottom: 15px; color: #ffc107; font-size: 14px;">
+                            Training Steps (${booklet.num_steps} total)
+                        </div>
+                        <div id="training-example-${idx}-steps-content">
+                            ${(function() {
+                                const steps = booklet.steps || [];
+                                if (steps.length === 0) return '<div style="color: #aaa; padding: 10px;">No steps available</div>';
+                                
+                                // Group steps by general_step
+                                const stepsByGeneral = {};
+                                steps.forEach(step => {
+                                    const genStep = step.general_step || 'Unknown';
+                                    if (!stepsByGeneral[genStep]) {
+                                        stepsByGeneral[genStep] = [];
+                                    }
+                                    stepsByGeneral[genStep].push(step);
+                                });
+                                
+                                let html = '';
+                                Object.keys(stepsByGeneral).sort((a, b) => {
+                                    const aNum = parseFloat(a) || 0;
+                                    const bNum = parseFloat(b) || 0;
+                                    return aNum - bNum;
+                                }).forEach(genStepNum => {
+                                    const genSteps = stepsByGeneral[genStepNum];
+                                    html += `
+                                        <div style="margin-bottom: 20px; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; border-left: 3px solid #ffc107;">
+                                            <div style="font-weight: bold; color: #ffc107; margin-bottom: 10px; font-size: 13px;">
+                                                General Step ${genStepNum} (${genSteps.length} substep${genSteps.length !== 1 ? 's' : ''})
+                                            </div>
+                                            ${genSteps.map((step, stepIdx) => {
+                                                const stepNum = step.step_number || `${genStepNum}.${stepIdx + 1}`;
+                                                const instruction = step.instruction || step.substep_reasoning || 'No instruction';
+                                                const toolUsed = step.tool_used ? ` | Tool: ${step.tool_used}` : '';
+                                                const objectInfo = step.object_num !== null && step.object_num !== undefined ? ` | Object #${step.object_num}` : '';
+                                                
+                                                return `
+                                                <div style="margin-bottom: 12px; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 4px;">
+                                                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                                                        <div style="flex: 1;">
+                                                            <div style="font-size: 11px; color: #aaa; margin-bottom: 4px;">
+                                                                Step ${stepNum}${step.object_substep ? ` (Substep ${step.object_substep})` : ''}${toolUsed}${objectInfo}
+                                                            </div>
+                                                            <div style="font-size: 12px; color: #e0e0e0; line-height: 1.4;">
+                                                                ${instruction}
+                                                            </div>
+                                                            ${step.substep_reasoning && step.substep_reasoning !== instruction ? `
+                                                            <div style="font-size: 11px; color: #888; margin-top: 4px; font-style: italic;">
+                                                                Reasoning: ${step.substep_reasoning}
+                                                            </div>
+                                                            ` : ''}
+                                                        </div>
+                                                    </div>
+                                                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                                        ${step.grid_before_image ? `
+                                                        <div style="text-align: center;">
+                                                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Before</div>
+                                                            <img src="data:image/png;base64,${step.grid_before_image}" style="max-width: 120px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; background: #000;">
+                                                        </div>
+                                                        ` : ''}
+                                                        ${step.grid_before_image && step.grid_after_image ? `
+                                                        <div style="color: #ffc107; font-size: 18px;">→</div>
+                                                        ` : ''}
+                                                        ${step.grid_after_image ? `
+                                                        <div style="text-align: center;">
+                                                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">After</div>
+                                                            <img src="data:image/png;base64,${step.grid_after_image}" style="max-width: 120px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; background: #000;">
+                                                        </div>
+                                                        ` : ''}
+                                                    </div>
+                                                </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    `;
+                                });
+                                return html;
+                            })()}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            }).join('');
+
+            // Test examples - show both expected and generated outputs
+            let testExamplesHtml = '';
+            if (puzzle.test_examples && puzzle.test_examples.length > 0) {
+                testExamplesHtml = puzzle.test_examples.map((ex, idx) => {
+                    const booklet = puzzle.test_booklets && puzzle.test_booklets[idx] ? puzzle.test_booklets[idx] : null;
+                    // Use predicted_image from test_example if available, otherwise from booklet
+                    const generatedOutput = ex.predicted_image || (booklet && booklet.final_grid_image ? booklet.final_grid_image : null);
+                    // Check if prediction matches expected output
+                    const matches = generatedOutput && ex.output ? 
+                        (ex.predicted_output && JSON.stringify(ex.output) === JSON.stringify(ex.predicted_output)) ||
+                        (booklet && booklet.final_grid && JSON.stringify(ex.output) === JSON.stringify(booklet.final_grid)) ||
+                        (booklet && booklet.is_correct === true)
+                        : false;
+                
+                return `
+                <div class="example-card">
+                    <div class="example-title">Test Example ${idx + 1}</div>
+                    <div style="margin-bottom: 10px; padding: 8px; background: rgba(74, 158, 255, 0.1); border-radius: 4px; font-size: 11px; color: #4a9eff;">
+                        <strong>Test Input → Expected Output → Generated Output</strong>
+                    </div>
+                    <div class="grid-pair">
+                        <div class="grid-container">
+                            <div class="grid-label">Test Input</div>
+                            <img src="data:image/png;base64,${ex.input_image}" class="grid-image" alt="Test Input">
+                        </div>
+                        <div class="arrow">→</div>
+                        <div class="grid-container">
+                            <div class="grid-label">Expected Output</div>
+                            ${ex.output_image ? `<img src="data:image/png;base64,${ex.output_image}" class="grid-image" alt="Expected Output">` : '<div style="padding: 20px; color: #aaa;">No expected output</div>'}
+                        </div>
+                        ${generatedOutput ? `
+                        <div class="arrow">→</div>
+                        <div class="grid-container">
+                            <div class="grid-label">Generated Output</div>
+                            <img src="data:image/png;base64,${generatedOutput}" class="grid-image" alt="Generated Output" style="${matches && ex.output_image ? 'border: 3px solid #4caf50;' : ex.output_image ? 'border: 3px solid #ff9800;' : ''}">
+                    </div>
+                        ` : ''}
+                </div>
+                    ${booklet && booklet.accuracy !== undefined ? `
+                    <div style="margin-top: 8px; padding: 6px; background: rgba(74, 158, 255, 0.1); border-radius: 4px; font-size: 11px; color: #4a9eff;">
+                        Accuracy: ${(booklet.accuracy * 100).toFixed(1)}% | ${booklet.is_correct ? '✓ Correct' : '✗ Incorrect'}
+                    </div>
+                    ` : ''}
+                    ${generatedOutput && ex.output_image ? `
+                    <div style="margin-top: 10px; padding: 8px; background: ${matches ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'}; border-radius: 4px; font-size: 12px; color: ${matches ? '#4caf50' : '#ff9800'};">
+                        ${matches ? '✓ Generated output matches expected' : '⚠ Generated output differs from expected'} | 
+                        Steps: ${booklet ? booklet.num_steps : 'N/A'}
+                    </div>
+                    ` : generatedOutput ? `
+                    <div style="margin-top: 10px; padding: 8px; background: rgba(74, 158, 255, 0.1); border-radius: 4px; font-size: 12px; color: #aaa;">
+                        Steps: ${booklet ? booklet.num_steps : 'N/A'} | No expected output to compare
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+                }).join('');
+            } else {
+                testExamplesHtml = '<div style="padding: 20px; color: #aaa; text-align: center;">No test examples available</div>';
+            }
+
+            // Steps with visual count and optional intermediate visuals
+            const stepsHtml = puzzle.general_steps.map((step, stepIdx) => {
+                const typeClass = step.action_type === 'OBSERVE' ? 'observe' : '';
+                const visualCount = step.visual_count || 0;
+                
+                // Clean up instruction: remove redundant "Step X: ACTION_TYPE - " prefix
+                let cleanInstruction = step.instruction || '';
+                // Pattern: "Step X: ACTION_TYPE - Step X: actual instruction"
+                // Remove the prefix up to and including the second "Step X:"
+                const prefixPattern = new RegExp(`^Step\\s+${step.step_number}:\\s+[A-Z]+\\s+-\\s+Step\\s+${step.step_number}:\\s*`, 'i');
+                cleanInstruction = cleanInstruction.replace(prefixPattern, '');
+                // If no match, try simpler pattern: "Step X: ACTION_TYPE - "
+                if (cleanInstruction === step.instruction) {
+                    const simplePrefixPattern = new RegExp(`^Step\\s+${step.step_number}:\\s+[A-Z]+\\s+-\\s*`, 'i');
+                    cleanInstruction = cleanInstruction.replace(simplePrefixPattern, '');
+                }
+                
+                return `
+                    <div class="step-item" id="step-${step.step_number}">
+                        <div class="step-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="step-number">Step ${step.step_number}</span>
+                            <span class="step-type ${typeClass}">${step.action_type}</span>
+                        </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <span style="font-size: 12px; color: #aaa;">${visualCount} visual${visualCount !== 1 ? 's' : ''}</span>
+                                ${visualCount > 0 ? `
+                                <button type="button" onclick="toggleStepVisuals(${step.step_number}, ${stepIdx}, event)" 
+                                        style="padding: 4px 12px; font-size: 11px; background: rgba(74, 158, 255, 0.2); border: 1px solid rgba(74, 158, 255, 0.5); border-radius: 4px; color: #4a9eff; cursor: pointer;">
+                                    Show Visuals
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="step-instruction">${cleanInstruction}</div>
+                        <div class="step-condition">Condition: ${step.condition}</div>
+                        <div id="step-${step.step_number}-visuals" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                            <div style="font-weight: bold; margin-bottom: 10px; color: #fff;">Intermediate Visuals:</div>
+                            <div id="step-${step.step_number}-visuals-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                                Loading visuals...
+                            </div>
+                    </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Current label display with failure modes
+            const failureModesText = puzzle.failure_modes && puzzle.failure_modes.length > 0 
+                ? ` (${puzzle.failure_modes.join(', ')})` 
+                : '';
+            const autoDetectedText = puzzle.auto_detected ? ' [Auto-detected]' : '';
+            const currentLabelHtml = puzzle.current_label ? `
+                <div class="current-label ${puzzle.current_label}" style="${puzzle.auto_detected ? 'font-style: italic; opacity: 0.9;' : ''} ${puzzle.current_label === 'skipped' ? 'background: rgba(158, 158, 158, 0.2); color: #9e9e9e;' : ''}">
+                    Currently labeled as: ${puzzle.current_label === 'skipped' ? 'SKIPPED - Not Enough Information' : puzzle.current_label.toUpperCase()}${failureModesText}${autoDetectedText}
+                    ${puzzle.auto_detected && puzzle.auto_detected_modes ? `<br><small style="font-size: 11px; opacity: 0.7;">Auto-detected modes: ${puzzle.auto_detected_modes.join(', ')}</small>` : ''}
+                </div>
+            ` : '';
+
+            container.innerHTML = `
+                <div class="puzzle-header">
+                    <div class="puzzle-title">Puzzle: ${puzzle.puzzle_id}</div>
+                    <div class="puzzle-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Training Accuracy</div>
+                            <div class="metric-value">${(puzzle.summary.training_accuracy * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Test Accuracy</div>
+                            <div class="metric-value">${puzzle.summary.test_accuracy !== null ? (puzzle.summary.test_accuracy * 100).toFixed(1) + '%' : 'N/A'}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Steps</div>
+                            <div class="metric-value">${puzzle.summary.num_general_steps}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Training Examples</div>
+                            <div class="metric-value">${puzzle.summary.num_training_examples}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <div class="section-title">Training Examples</div>
+                    <div class="examples-grid">
+                        ${trainingExamplesHtml}
+                    </div>
+                </div>
+
+                ${puzzle.test_examples && puzzle.test_examples.length > 0 ? `
+                <div class="examples-section">
+                    <div class="section-title">Test Examples (${puzzle.test_examples.length})</div>
+                    <div class="examples-grid">
+                        ${testExamplesHtml}
+                    </div>
+                </div>
+                ` : puzzle.summary.test_accuracy !== null && puzzle.summary.test_accuracy !== undefined ? `
+                <div class="examples-section">
+                    <div class="section-title">Test Examples</div>
+                    <div style="padding: 20px; color: #aaa; text-align: center;">
+                        No test examples found in data, but test accuracy is ${(puzzle.summary.test_accuracy * 100).toFixed(1)}%
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="steps-section">
+                    <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Generated Steps</span>
+                        ${puzzle.num_duplicates > 0 ? `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 12px; color: #aaa;">
+                                Version ${(puzzle.current_duplicate_index || 0) + 1} of ${(puzzle.duplicate_versions || []).length}
+                            </span>
+                            <button type="button" onclick="navigateDuplicateVersion(-1, event)" 
+                                    style="padding: 6px 12px; font-size: 14px; background: rgba(74, 158, 255, 0.2); border: 1px solid rgba(74, 158, 255, 0.5); border-radius: 4px; color: #4a9eff; cursor: pointer; ${(puzzle.current_duplicate_index || 0) === 0 ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                                    ${(puzzle.current_duplicate_index || 0) === 0 ? 'disabled' : ''}>
+                                ← Previous
+                            </button>
+                            <button type="button" onclick="navigateDuplicateVersion(1, event)" 
+                                    style="padding: 6px 12px; font-size: 14px; background: rgba(74, 158, 255, 0.2); border: 1px solid rgba(74, 158, 255, 0.5); border-radius: 4px; color: #4a9eff; cursor: pointer; ${(puzzle.current_duplicate_index || 0) >= (puzzle.duplicate_versions || []).length - 1 ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                                    ${(puzzle.current_duplicate_index || 0) >= (puzzle.duplicate_versions || []).length - 1 ? 'disabled' : ''}>
+                                Next →
+                            </button>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ${stepsHtml}
+                </div>
+
+                <div class="labeling-section">
+                    <div class="labeling-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="event.stopPropagation(); toggleLabelingSection(event);">
+                        <span>Is the reasoning correct?</span>
+                        <span id="labeling-toggle-icon" style="font-size: 20px; user-select: none; pointer-events: none;">▶</span>
+                    </div>
+                    <div id="labeling-content">
+                    <div class="label-buttons">
+                        <button type="button" class="label-btn correct ${puzzle.current_label === 'correct' ? 'active' : ''}" 
+                                onclick="saveLabel('correct')"
+                                title="Mark as Correct Reasoning">
+                            ✓
+                        </button>
+                        <button type="button" class="label-btn incorrect ${puzzle.current_label === 'incorrect' ? 'active' : ''}" 
+                                onclick="saveLabel('incorrect')"
+                                title="Mark as Incorrect Reasoning">
+                            ✗
+                        </button>
+                        <button type="button" class="label-btn skipped ${puzzle.current_label === 'skipped' ? 'active' : ''}" 
+                                onclick="saveLabel('skipped')"
+                                style="width: 120px; height: 60px; border-radius: 8px; border: none; font-size: 14px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); font-weight: bold; background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%); color: white;"
+                                title="Skip - Not Enough Information">
+                            ⏭ Skip
+                        </button>
+                    </div>
+                    ${puzzle.current_label ? `
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <button type="button" onclick="clearLabel()" style="padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: #aaa; cursor: pointer; font-size: 12px;">
+                            Clear Label
+                        </button>
+                    </div>
+                    ` : ''}
+                    
+                    <div id="failure-modes-section" style="display: ${puzzle.current_label && puzzle.current_label !== 'skipped' ? 'block' : 'none'}; margin: 20px 0; padding: 20px; background: ${puzzle.current_label === 'incorrect' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(74, 158, 255, 0.1)'}; border-radius: 8px; border: 1px solid ${puzzle.current_label === 'incorrect' ? 'rgba(244, 67, 54, 0.3)' : 'rgba(74, 158, 255, 0.3)'};">
+                        <div style="font-weight: bold; margin-bottom: 10px; color: ${puzzle.current_label === 'incorrect' ? '#f44336' : '#4a9eff'};">
+                            ${puzzle.current_label === 'incorrect' ? 'Select Failure Modes (multiple allowed):' : 'Select Issues/Notes (multiple allowed, optional):'}
+                        </div>
+                        <div style="font-size: 11px; color: #aaa; margin-bottom: 15px;">
+                            ${puzzle.current_label === 'correct' ? 'You can select multiple items to track minor issues or edge cases even for correct reasoning.' : 'You can select multiple failure modes if the puzzle exhibits multiple issues.'}
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 8px; color: #fff;">Category A: Accuracy Failures</div>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="A1" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('A1') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">A1: Complete Failure (0% accuracy)</span>
+                                </label>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="A2" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('A2') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">A2: Partial Failure (0-100%)</span>
+                                </label>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="A3" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('A3') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">A3: Training Failure (<100%)</span>
+                                </label>
+                            </div>
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 8px; color: #fff;">Category B: Step Count Issues</div>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="B1" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('B1') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">B1: Too Many Steps (>10)</span>
+                                </label>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="B2" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('B2') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">B2: Too Few Steps (<2)</span>
+                                </label>
+                            </div>
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 8px; color: #fff;">Category C: Visual Fidelity Issues</div>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="C1" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('C1') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">C1: Grid Mismatch</span>
+                                </label>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="C2" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('C2') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">C2: Bbox Misalignment</span>
+                                </label>
+                                <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                    <input type="checkbox" value="C3" class="failure-mode-checkbox" ${puzzle.failure_modes && puzzle.failure_modes.includes('C3') ? 'checked' : ''}>
+                                    <span style="margin-left: 8px;">C3: Description Mismatch</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; text-align: center;">
+                            ${puzzle.current_label === 'incorrect' ? `
+                            <button type="button" onclick="saveLabelWithModes('incorrect')" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                Save Incorrect Label with Selected Modes
+                            </button>
+                            ` : puzzle.current_label === 'correct' ? `
+                            <button type="button" onclick="saveLabelWithModes('correct')" style="padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                Save Correct Label with Selected Notes
+                            </button>
+                            ` : ''}
+                            <div style="margin-top: 10px; font-size: 11px; color: #aaa;">
+                                You can select multiple ${puzzle.current_label === 'correct' ? 'notes' : 'failure modes'} by checking multiple boxes above
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <textarea id="reasoning-input" class="reasoning-input" 
+                              placeholder="Optional: Add reasoning notes about why the steps are correct or incorrect...">${puzzle.current_reasoning || ''}</textarea>
+                    ${currentLabelHtml}
+                    
+                    <div id="submit-and-next-btn" style="display: ${puzzle.current_label ? 'block' : 'none'}; margin-top: 20px; text-align: center;">
+                        <button type="button" onclick="submitAndMoveToNext()" 
+                                style="padding: 12px 30px; background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3); transition: all 0.3s;">
+                            ${puzzle.current_label === 'skipped' ? 'Skip & Move to Next Puzzle →' : 'Submit & Move to Next Puzzle →'}
+                        </button>
+                    </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showFailureModes() {
+            // Make sure labeling section is expanded
+            const content = document.getElementById('labeling-content');
+            const icon = document.getElementById('labeling-toggle-icon');
+            if (content && content.style.display === 'none') {
+                content.style.display = 'block';
+                if (icon) icon.textContent = '▼';
+            }
+            
+            const section = document.getElementById('failure-modes-section');
+            if (section && currentPuzzle) {
+                section.style.display = 'block';
+                // Update styling based on current label
+                const currentLabel = currentPuzzle.current_label;
+                if (currentLabel === 'correct') {
+                    section.style.background = 'rgba(74, 158, 255, 0.1)';
+                    section.style.borderColor = 'rgba(74, 158, 255, 0.3)';
+                    const title = section.querySelector('div[style*="font-weight: bold"]');
+                    if (title) {
+                        title.textContent = 'Select Issues/Notes (optional):';
+                        title.style.color = '#4a9eff';
+                    }
+                } else if (currentLabel === 'incorrect') {
+                    section.style.background = 'rgba(244, 67, 54, 0.1)';
+                    section.style.borderColor = 'rgba(244, 67, 54, 0.3)';
+                    const title = section.querySelector('div[style*="font-weight: bold"]');
+                    if (title) {
+                        title.textContent = 'Select Failure Modes:';
+                        title.style.color = '#f44336';
+                    }
+                }
+            }
+        }
+        
+        async function saveLabelWithModesFromButton(label) {
+            // Called when user wants to save with selected modes
+            await saveLabelWithModes(label);
+        }
+
+        async function saveLabel(label) {
+            console.log('saveLabel called with:', label);
+            if (!currentPuzzle) {
+                console.error('No current puzzle loaded');
+                showNotification('Error: No puzzle loaded. Please select a puzzle first.', 'error');
+                return;
+            }
+            
+            // For skipped labels, don't show failure modes
+            if (label !== 'skipped') {
+                // Show failure modes panel for both correct and incorrect
+                showFailureModes();
+            }
+            
+            // Preload next puzzle if this is the last one in the batch
+            if (currentPuzzleIndex === 0 && hasMorePuzzles && !nextPuzzlePreloaded) {
+                console.log('Preloading next puzzle...');
+                preloadNextPuzzle(); // Don't await - do in background
+            }
+            
+            // Save immediately with any selected failure modes
+            await saveLabelWithModes(label);
+        }
+
+        async function saveLabelWithModes(label) {
+            if (!currentPuzzle) {
+                console.error('No current puzzle loaded');
+                showNotification('Error: No puzzle loaded', 'error');
+                return;
+            }
+
+            const reasoningEl = document.getElementById('reasoning-input');
+            const reasoning = reasoningEl ? reasoningEl.value : '';
+            
+            // Get selected failure modes (for both correct and incorrect labels)
+            const failureModes = [];
+            const checkboxes = document.querySelectorAll('.failure-mode-checkbox:checked');
+            checkboxes.forEach(cb => failureModes.push(cb.value));
+            
+            console.log('Saving label:', label, 'with modes:', failureModes);
+            
+            try {
+                const response = await fetch('/api/label', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        puzzle_id: currentPuzzle.puzzle_id,
+                        label: label,
+                        reasoning: reasoning,
+                        failure_modes: failureModes,
+                        file_path: currentPuzzle.file_path || ''
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update current puzzle label
+                    currentPuzzle.current_label = label;
+                    currentPuzzle.current_reasoning = reasoning;
+                    currentPuzzle.failure_modes = result.failure_modes || [];
+                    
+                    // Update puzzle in list
+                    const puzzleInList = puzzles.find(p => p.puzzle_id === currentPuzzle.puzzle_id);
+                    if (puzzleInList) {
+                        puzzleInList.label = label;
+                        puzzleInList.reasoning = reasoning;
+                    }
+                    
+                    // Show feedback
+                    const message = result.is_edit ? 'Label updated!' : 'Label saved!';
+                    showNotification(message, 'success');
+                    
+                    // Update puzzle in loaded batch
+                    const puzzleInBatch = loadedPuzzles.find(p => p.puzzle_id === currentPuzzle.puzzle_id);
+                    if (puzzleInBatch) {
+                        puzzleInBatch.label = label;
+                        puzzleInBatch.reasoning = reasoning;
+                    }
+                    
+                    // Update UI
+                    renderPuzzleList();
+                    loadStats();
+                    
+                    // Show submit button after saving
+                    const submitBtn = document.getElementById('submit-and-next-btn');
+                    if (submitBtn) {
+                        submitBtn.style.display = 'block';
+                    }
+                } else {
+                    showNotification('Error saving label: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving label:', error);
+                showNotification('Error saving label: ' + error.message, 'error');
+            }
+        }
+
+        async function clearLabel() {
+            if (!currentPuzzle || !currentPuzzle.current_label) return;
+            
+            if (!confirm('Are you sure you want to clear this label?')) return;
+            
+            try {
+                const response = await fetch(`/api/label/${currentPuzzle.puzzle_id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentPuzzle.current_label = null;
+                    currentPuzzle.current_reasoning = '';
+                    document.getElementById('reasoning-input').value = '';
+                    
+                    showNotification('Label cleared!', 'success');
+                    renderPuzzle(currentPuzzle);
+                    renderPuzzleList();
+                    loadStats();
+                } else {
+                    showNotification('Error clearing label: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error clearing label:', error);
+                showNotification('Error clearing label: ' + error.message, 'error');
+            }
+        }
+
+        function toggleLabelingSection(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const content = document.getElementById('labeling-content');
+            const icon = document.getElementById('labeling-toggle-icon');
+            
+            if (!content || !icon) return;
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▶';
+            }
+        }
+
+        function submitAndMoveToNext() {
+            if (!currentPuzzle || !currentPuzzle.current_label) {
+                showNotification('Please label this puzzle first (Correct, Incorrect, or Skip)', 'error');
+                return;
+            }
+            
+            // Move to next puzzle
+            setTimeout(() => {
+                // Check if we have a preloaded puzzle ready
+                if (nextPuzzlePreloaded) {
+                    console.log('Using preloaded puzzle:', nextPuzzlePreloaded.meta.puzzle_id);
+                    currentPuzzle = nextPuzzlePreloaded.data;
+                    currentPuzzleIndex = 0;
+                    currentOffset++;
+                    loadedPuzzles = [nextPuzzlePreloaded.meta];
+                    nextPuzzlePreloaded = null; // Clear preloaded puzzle
+                    renderPuzzle(currentPuzzle);
+                    
+                    // Preload the next one in the background
+                    if (hasMorePuzzles) {
+                        preloadNextPuzzle();
+                    }
+                } else if (hasMorePuzzles) {
+                    // No preloaded puzzle, load next one
+                    currentOffset++;
+                    loadNextPuzzle();
+                } else {
+                    // No more unlabeled puzzles at all
+                    currentPuzzle = null;
+                    document.getElementById('puzzle-content').innerHTML = `
+                        <div class="empty-state">
+                            <h2>All puzzles labeled!</h2>
+                            <p>You've completed labeling all puzzles. Great work!</p>
+                        </div>
+                    `;
+                }
+            }, 100);
+        }
+        
+        function toggleTrainingSteps(exampleIndex, event) {
+            const stepsContainer = document.getElementById(`training-example-${exampleIndex}-steps`);
+            if (!stepsContainer) return;
+            
+            const isVisible = stepsContainer.style.display !== 'none';
+            stepsContainer.style.display = isVisible ? 'none' : 'block';
+            
+            // Update button text
+            const button = event.target;
+            if (button && currentPuzzle) {
+                const booklet = currentPuzzle.training_booklets && currentPuzzle.training_booklets[exampleIndex] ? currentPuzzle.training_booklets[exampleIndex] : null;
+                if (booklet) {
+                    button.textContent = isVisible ? `${booklet.num_steps} Step${booklet.num_steps !== 1 ? 's' : ''}` : 'Hide Steps';
+                }
+            }
+        }
+        
+        function toggleStepVisuals(stepNumber, stepIdx, event) {
+            const visualsContainer = document.getElementById(`step-${stepNumber}-visuals`);
+            const visualsContent = document.getElementById(`step-${stepNumber}-visuals-content`);
+            const button = event ? event.target : null;
+            
+            if (!visualsContainer || !visualsContent) return;
+            
+            const isVisible = visualsContainer.style.display !== 'none';
+            
+            if (isVisible) {
+                // Hide visuals
+                visualsContainer.style.display = 'none';
+                button.textContent = 'Show Visuals';
+            } else {
+                // Show visuals - load them if not already loaded
+                if (visualsContent.innerHTML === 'Loading visuals...' || visualsContent.innerHTML.trim() === '') {
+                    loadStepVisuals(stepNumber, stepIdx, visualsContent);
+                }
+                visualsContainer.style.display = 'block';
+                button.textContent = 'Hide Visuals';
+            }
+        }
+        
+        function loadStepVisuals(stepNumber, stepIdx, container) {
+            if (!currentPuzzle) return;
+            
+            // Collect all visuals for this step from all booklets
+            const stepVisuals = [];
+            
+            // From training booklets
+            currentPuzzle.training_booklets.forEach((booklet, bookletIdx) => {
+                if (booklet.steps) {
+                    booklet.steps.forEach(step => {
+                        const genStepNum = String(step.step_number).split('.')[0];
+                        if (genStepNum === String(stepNumber)) {
+                            stepVisuals.push({
+                                source: `Training Example ${bookletIdx + 1}`,
+                                step_number: step.step_number,
+                                grid_before: step.grid_before_image,
+                                grid_after: step.grid_after_image
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // From test booklets
+            currentPuzzle.test_booklets.forEach((booklet, bookletIdx) => {
+                if (booklet.steps) {
+                    booklet.steps.forEach(step => {
+                        const genStepNum = String(step.step_number).split('.')[0];
+                        if (genStepNum === String(stepNumber)) {
+                            stepVisuals.push({
+                                source: `Test Example ${bookletIdx + 1}`,
+                                step_number: step.step_number,
+                                grid_before: step.grid_before_image,
+                                grid_after: step.grid_after_image
+                            });
+                        }
+                    });
+                }
+            });
+            
+            if (stepVisuals.length === 0) {
+                container.innerHTML = '<div style="color: #aaa; padding: 10px;">No visuals found for this step</div>';
+                return;
+            }
+            
+            // Render visuals
+            const visualsHtml = stepVisuals.map(visual => `
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 6px;">
+                    <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">${visual.source} - Step ${visual.step_number}</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${visual.grid_before ? `
+                        <div>
+                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">Before</div>
+                            <img src="data:image/png;base64,${visual.grid_before}" style="max-width: 120px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                        </div>
+                        ` : ''}
+                        ${visual.grid_after ? `
+                        <div>
+                            <div style="font-size: 10px; color: #888; margin-bottom: 4px;">After</div>
+                            <img src="data:image/png;base64,${visual.grid_after}" style="max-width: 120px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = visualsHtml;
+        }
+
+        async function loadPredictedInput(filePath, exampleIndex, cardIndex, event) {
+            const button = event.target;
+            const gridsContainer = document.getElementById(`training-example-${cardIndex}-grids`);
+            
+            // Check if already loaded
+            if (gridsContainer.querySelector('.predicted-input-container')) {
+                // Toggle visibility
+                const container = gridsContainer.querySelector('.predicted-input-container');
+                const isVisible = container.style.display !== 'none';
+                container.style.display = isVisible ? 'none' : 'flex';
+                button.textContent = isVisible ? 'Show Predicted Input' : 'Hide Predicted Input';
+                return;
+            }
+            
+            // Show loading state
+            const originalText = button.textContent;
+            button.textContent = 'Loading...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/puzzle/${encodeURIComponent(filePath)}/training_predicted_input/${exampleIndex}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load predicted input: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.predicted_input_image) {
+                    // Check if predicted input matches actual input
+                    const actualInput = currentPuzzle.training_examples[exampleIndex].input;
+                    const matches = JSON.stringify(actualInput) === JSON.stringify(data.predicted_input_grid);
+                    
+                    // Create predicted input container
+                    const predictedInputContainer = document.createElement('div');
+                    predictedInputContainer.className = 'predicted-input-container';
+                    predictedInputContainer.style.cssText = 'display: flex; align-items: center;';
+                    
+                    // Insert before the first arrow (before Expected Output)
+                    const firstArrow = gridsContainer.querySelector('.arrow');
+                    if (firstArrow) {
+                        gridsContainer.insertBefore(predictedInputContainer, firstArrow);
+                    } else {
+                        gridsContainer.appendChild(predictedInputContainer);
+                    }
+                    
+                    predictedInputContainer.innerHTML = `
+                        <div class="grid-container">
+                            <div class="grid-label">Predicted Input</div>
+                            <img src="data:image/png;base64,${data.predicted_input_image}" class="grid-image" alt="Predicted Input" style="${matches ? 'border: 3px solid #4caf50;' : 'border: 3px solid #ff9800;'}">
+                        </div>
+                        <div class="arrow">→</div>
+                    `;
+                    
+                    // Add comparison message
+                    const card = document.getElementById(`training-example-${cardIndex}`);
+                    const existingMsg = card.querySelector('.predicted-input-msg');
+                    if (!existingMsg) {
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = 'predicted-input-msg';
+                        msgDiv.style.cssText = `margin-top: 10px; padding: 8px; background: ${matches ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)'}; border-radius: 4px; font-size: 12px; color: ${matches ? '#4caf50' : '#ff9800'};`;
+                        msgDiv.textContent = matches ? '✓ Predicted input matches actual input' : '⚠ Predicted input differs from actual input';
+                        card.appendChild(msgDiv);
+                    }
+                    
+                    button.textContent = 'Hide Predicted Input';
+                    button.disabled = false;
+                } else {
+                    throw new Error('No predicted input image found');
+                }
+            } catch (error) {
+                console.error('Error loading predicted input:', error);
+                showNotification('Failed to load predicted input: ' + error.message, 'error');
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                background: ${type === 'success' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(244, 67, 54, 0.9)'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                font-size: 14px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+
+        // Initialize
+        loadPuzzles();
+        loadNextPuzzle(); // Load first puzzle
+        setInterval(loadStats, 5000); // Refresh stats every 5 seconds
+    </script>
+</body>
+</html>
+
