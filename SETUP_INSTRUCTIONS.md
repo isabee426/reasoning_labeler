@@ -1,5 +1,11 @@
 # Setup Instructions for Second Annotator
 
+# ISAS NOTES
+
+Hi Niko! Thanks for annotating my data. this should take 2ish hours, let me know if it takes longer. I recommend looking at the puzzles themselves first (the visuals), figuring out the trick, (there are 2-3 training examples, then a test input which the puzzle-solver must predict the output for. So try to guess what "rule" or steps take you from input to output on all examples, then read the steps (some of them are formatted weirdly, or are very technical so they take some close reading.) If the models generated steps (seen by clicking one of the puzzlles on the left and scrolling down) are consistent with the trick you originally identified. If there are any small mistakes (e.g. it says red square in the top left corner when its right) mark as incorrect. There are a few failure modes to label and more information about each is in the dedicated readme. Also, for "bbox misalignment" i disabled showing inbetween steps since sometimes there can be too many, so assume when there are too many steps or not enough steps that it was also this failure mode. You can check off multiple. I know this might seem overwhelming, but once you get in the rhythm its way more clear. Thanks again!
+
+---
+
 ## Quick Start
 
 1. **Download/Clone this repository**
