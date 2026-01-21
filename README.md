@@ -83,31 +83,7 @@ reasoning_labeler_repo/
 
 ## Usage
 
-### 1. Prepare Your Puzzle Files
-
-Place your puzzle analysis JSON files in the `traces/` directory. The app looks for files matching these patterns:
-- `*_v11_analysis*.json`
-- `*_v10_analysis*.json`
-- `*_analysis.json`
-
-**Expected JSON structure:**
-```json
-{
-  "puzzle_id": "abc123",
-  "general_steps": [...],
-  "training_examples": [...],
-  "test_examples": [...],
-  "training_booklets": [...],
-  "test_booklets": [...],
-  "summary": {
-    "training_accuracy": 1.0,
-    "test_accuracy": 0.0,
-    "num_general_steps": 5
-  }
-}
-```
-
-### 2. Run the Application
+### 1. Run the Application
 
 **Windows:**
 ```bash
@@ -121,7 +97,7 @@ python3 app.py
 
 The app will start on `http://localhost:5001`
 
-### 3. Open in Browser
+### 2. Open in Browser
 
 Navigate to `http://localhost:5001` in your web browser.
 
@@ -178,11 +154,11 @@ After completing your labeling session:
    labels/.reasoning_labels.json
    ```
 
-2. **Send the labels file** to the other annotator (via email, shared drive, etc.)
+2. **Send the labels file** to ISA (via email, shared drive, etc.)
 
 3. **The other annotator should:**
    - Place the labels file in their `labels/` directory
-   - Run the app and continue labeling
+   - Do some research with it
    - Labels will merge automatically (existing labels won't be overwritten unless edited)
 
 ## Statistics
