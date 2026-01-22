@@ -7,6 +7,8 @@ Hi Niko! Thanks for annotating my data. this should take 2ish hours, let me know
 IMPORTANT NOTE:
 if the general steps only has one step skip it. It was a technical error. Also you can click arrows to see multiple versions of the steps if the first one is formatted poorly. 
 
+Also btw failure mode c1 is when the text doesnt describe the grid correctly, and the c3 is when the text was correct but the grid wasnt. You can more details in the readmes. Theres also quickstart files but make sure you make a venv first.
+
 ---
 
 A Flask-based web application for labeling the correctness of reasoning steps in ARC puzzle solutions. This tool allows human annotators to review puzzle-solving steps and label them as correct, incorrect, or skipped.
