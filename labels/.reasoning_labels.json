@@ -1,0 +1,670 @@
+{
+  "00576224": {
+    "label": "correct",
+    "reasoning": "Test had B2 Failure, Failed training example was a C3 Error failing to properly fulfill step 3.",
+    "file_path": "00576224_v10_analysis.json",
+    "failure_modes": [
+      "A2",
+      "A3",
+      "B2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T19:51:09.590728",
+    "reviewer": "human",
+    "edited": true
+  },
+  "007bbfb7": {
+    "label": "correct",
+    "reasoning": "Training example 2 had to many repeated steps: likely Bbox (C2). Test was C3 (incorrectly mapped a color). B1 is found on test and both failed training examples. Generated steps are sound.",
+    "file_path": "007bbfb7_v11_analysis.json",
+    "failure_modes": [
+      "B1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T20:01:31.983607",
+    "reviewer": "human",
+    "edited": true
+  },
+  "009d5c81": {
+    "label": "incorrect",
+    "reasoning": "Got it mostly correct surprisingly. The failed training was due to C2, which was the only example with this issue. Training example 2 suffered from B1. Generated steps were mostly correct in determining how to crop (aside from requiring the \"connected\" target area, which could break reasoning under diagonal connections). The generated steps also failed to reference how the reference shape stays constant in color and how its shape maps to the output color of the target area.",
+    "file_path": "009d5c81_v11_analysis.json",
+    "failure_modes": [
+      "A3",
+      "B1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T20:11:51.092808",
+    "reviewer": "human",
+    "edited": true
+  },
+  "017c7c7b": {
+    "label": "incorrect",
+    "reasoning": "The generated reasoning steps are somewhat out of order. Step 3 is ambiguous on what the three new rows should look like. Step 4 mentions Phase 1, is that Step 1? or the observations from Step 2? Step 7 describes a continuous object in the center row, which doesn't fully capture the problem as some examples don't always fit that condition either. All training examples skip steps 1-3 in the \"steps shown\".",
+    "file_path": "017c7c7b_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A2",
+      "A3",
+      "B2",
+      "C1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T20:42:22.725126",
+    "reviewer": "human",
+    "edited": true
+  },
+  "03560426": {
+    "label": "incorrect",
+    "reasoning": "Steps are incorrect in terms of describing how to place the objects. Does hierarchical placement to avoid overlaps, rather than actually applying overlaps top left -> bottom right as required (C1) (Steps 4-6). Also has an ambiguous description on how to remove the original reference objects, by describing them as \"unassigned\" (Step 7).",
+    "file_path": "03560426_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "C1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T20:51:38.807230",
+    "reviewer": "human",
+    "edited": true
+  },
+  "05269061": {
+    "label": "correct",
+    "reasoning": "Test properly maps all of the diagonals, but mis-maps one of the colors from yellow to green. Training examples incorrectly crop the size of the output grid based on the size of the largest input diagonal. They also tend to jump to the edge case step, not even applying the backup transform that is suggested.",
+    "file_path": "05269061_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A2",
+      "A3",
+      "B2",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T21:49:02.907087",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0692e18c": {
+    "label": "correct",
+    "reasoning": "",
+    "file_path": "0692e18c_v11_analysis.json",
+    "failure_modes": [
+      "B1",
+      "C2"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T21:55:04.004093",
+    "reviewer": "human",
+    "edited": true
+  },
+  "00d62c1b": {
+    "label": "correct",
+    "reasoning": "",
+    "file_path": "00d62c1b_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T22:02:42.384906",
+    "reviewer": "human",
+    "edited": false
+  },
+  "00dbd492": {
+    "label": "correct",
+    "reasoning": "Model correctly defines the hollow squares, but always fails to actually apply any of the transform steps. Training example one breaks this, where it incorrectly crops the area within the square, failing the transform step.",
+    "file_path": "00dbd492_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B2",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T23:18:34.187392",
+    "reviewer": "human",
+    "edited": true
+  },
+  "045e512c": {
+    "label": "incorrect",
+    "reasoning": "Generated steps have a logic error in step 3, stating that it should make copies of P is incorrect. Copies should be make of O on the direction of P with P's color.",
+    "file_path": "045e512c_v11_analysis.json",
+    "failure_modes": [
+      "B1",
+      "C1"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T23:24:15.533346",
+    "reviewer": "human",
+    "edited": true
+  },
+  "06df4c85": {
+    "label": "correct",
+    "reasoning": "Reasoning is solid. Not enough run data to determine any failure modes.",
+    "file_path": "06df4c85_v11_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T23:31:04.824192",
+    "reviewer": "human",
+    "edited": true
+  },
+  "025d127b": {
+    "label": "incorrect",
+    "reasoning": "In both training examples, the model fails to set certain colors cells back to 0 after the crop -> apply c+1 shift -> un-crop. Fails to describe the diagonals as part of the area to be shifted in the generated steps.",
+    "file_path": "025d127b_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B2",
+      "C1",
+      "C2"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T23:43:34.776598",
+    "reviewer": "human",
+    "edited": true
+  },
+  "09c534e7": {
+    "label": "correct",
+    "reasoning": "Solid generated steps. Not enough information to determine failure modes.",
+    "file_path": "09c534e7_v11_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T23:48:18.358468",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0a2355a6": {
+    "label": "incorrect",
+    "reasoning": "Generated steps don't properly describe how the requirements for the color mappings. Assumes that all 3-cells are always vertical, and assumes all 4-cells are always horizontal and brings in 3-cells into that definition as well. Doesn't define any color mapping for 2-cells. Assumes an edge case that doesn't exist in the puzzle (Step 4).",
+    "file_path": "0a2355a6_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-21T23:55:01.906832",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0b148d64": {
+    "label": "correct",
+    "reasoning": "Cropping errors. C2 (Bbox misalignment only applies to the failed training example and the failed test example 1).",
+    "file_path": "0b148d64_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B1",
+      "C2"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:02:47.828978",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0c786b71": {
+    "label": "incorrect",
+    "reasoning": "Incorrect grid calculations on certain steps for applying transformations. Also doesn't follow the step's ordering of filling in the output quadrant by quadrant.",
+    "file_path": "0c786b71_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B2",
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:08:02.343699",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0d3d703e": {
+    "label": "correct",
+    "reasoning": "Simple color mapping steps are correct. Model continuously runs B-box/crop even after solving the puzzle, likely leading to some form of context rot and eventually causing incorrect outputs.",
+    "file_path": "0d3d703e_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B1",
+      "C2"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:11:16.178770",
+    "reviewer": "human",
+    "edited": true
+  },
+  "1c786137": {
+    "label": "incorrect",
+    "reasoning": "Incorrectly describes the output matrix as the transpose of the interior rectangle area, while in reality it is the raw copy.",
+    "file_path": "1c786137_v10_analysis.json",
+    "failure_modes": [
+      "A1",
+      "C1"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:14:19.830448",
+    "reviewer": "human",
+    "edited": true
+  },
+  "2753e76c": {
+    "label": "incorrect",
+    "reasoning": "Incorrectly recognizes the sorting order and size for the output grid as the number of distinct objects (row output size) and max side length of a distinct object (ordering and column output size)",
+    "file_path": "2753e76c_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B1",
+      "C1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:18:33.263569",
+    "reviewer": "human",
+    "edited": true
+  },
+  "4364c1c4": {
+    "label": "incorrect",
+    "reasoning": "Fails to correctly identify that the offset is always 2 to the right, and that it must be applied to any object that is vertically adjacent and below another non-background object. Cropping errors with only applying crop -> transform to parts of an object, and forgetting to do it for the rest.",
+    "file_path": "4364c1c4_v10_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:26:57.531810",
+    "reviewer": "human",
+    "edited": true
+  },
+  "5623160b": {
+    "label": "incorrect",
+    "reasoning": "Uses centroids to describe how the objects should move, rather than simple horizontal/vertical alignments with raw horizontal/vertical movement planes for the objects as well. Fails to also un-crop objects after moving them. Incorrectly defines what to do when objects are vs. are not on the border of the input grid.",
+    "file_path": "5623160b_v10_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B2",
+      "C1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:36:30.451211",
+    "reviewer": "human",
+    "edited": true
+  },
+  "68b67ca3": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "68b67ca3_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:38:04.884193",
+    "reviewer": "human",
+    "edited": true
+  },
+  "a6953f00": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "a6953f00_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:38:24.151415",
+    "reviewer": "human",
+    "edited": false
+  },
+  "d931c21c": {
+    "label": "correct",
+    "reasoning": "Test case fails to apply changes only to enclosed blue shapes and doesn't apply all necessary changes to the ones it does properly recognize.",
+    "file_path": "d931c21c_v10_analysis.json",
+    "failure_modes": [
+      "A1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:44:55.718648",
+    "reviewer": "human",
+    "edited": true
+  },
+  "ddf7fa4f": {
+    "label": "correct",
+    "reasoning": "Test case completely ignores all color mapping rules.",
+    "file_path": "ddf7fa4f_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:48:35.719154",
+    "reviewer": "human",
+    "edited": true
+  },
+  "05a7bcf2": {
+    "label": "incorrect",
+    "reasoning": "Steps don't handle the case that the color 8 rail can also run vertically, incorrectly removes the original yellow objects, losing them as reference to put as green caps to the yellow pillars. Steps also don't properly define how to define the bounding boxes to create a yellow pillar under or to the right or left of. Too few steps in the test case, as the input grid doesn't match what the generated steps expect.",
+    "file_path": "05a7bcf2_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B2",
+      "C1"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T00:59:57.678987",
+    "reviewer": "human",
+    "edited": true
+  },
+  "070dd51e": {
+    "label": "correct",
+    "reasoning": "Generated steps are correct until step 6, which can cause the model to overwrite its previous changes. ",
+    "file_path": "070dd51e_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T01:02:27.045767",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0962bcdd": {
+    "label": "incorrect",
+    "reasoning": "Repeated crop -> transform steps in the training cases eventually lead to a B-box Misalignment, destroying a previously correct to-be output. Generated steps don't properly define the diagonals to place color A on.",
+    "file_path": "0962bcdd_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B1",
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T01:10:03.560916",
+    "reviewer": "human",
+    "edited": true
+  },
+  "09629e4f": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "09629e4f_v11_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:08:38.319941",
+    "reviewer": "human",
+    "edited": false
+  },
+  "0a1d4ef5": {
+    "label": "correct",
+    "reasoning": "A few of the generated steps are ambiguous in terms of mapping r,c to R,C but is otherwise solid. Training examples keep applying the same crop -> transform even after having generated the output.",
+    "file_path": "0a1d4ef5_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:22:14.620605",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0a938d79": {
+    "label": "correct",
+    "reasoning": "The training examples shown apply correct changes, just not all of the required changes described in the generated steps. The test example likely fails to properly execute steps 2 and 3.",
+    "file_path": "0a938d79_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "B2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:31:18.611029",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0b17323b": {
+    "label": "correct",
+    "reasoning": "Generated steps are right, but step 6 doesn't make it clear that this is an operation that should run in a loop until the border of the grid is met. Training examples attempt to apply crop -> transform operations on the incorrect cells in the grid.",
+    "file_path": "0b17323b_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:38:25.082089",
+    "reviewer": "human",
+    "edited": true
+  },
+  "0c9aba6e": {
+    "label": "incorrect",
+    "reasoning": "Generated steps fail to recognize as the output being the \"intersection\" of the empty space above and below the horizontal line of color 7. Certain training examples are close to being right, but mis-crop part of the input.",
+    "file_path": "0c9aba6e_v11_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "C1",
+      "C2",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:47:02.505588",
+    "reviewer": "human",
+    "edited": true
+  },
+  "11852cab": {
+    "label": "incorrect",
+    "reasoning": "Generated steps only generalize to the immediate 3x3 area around the center, not the 5x5 area. The test example likely fails its 90 deg. rotation operations around the center for step 2.",
+    "file_path": "11852cab_v10_analysis.json",
+    "failure_modes": [
+      "A1",
+      "C1",
+      "C3"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:53:05.308885",
+    "reviewer": "human",
+    "edited": true
+  },
+  "1fad071e": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "1fad071e_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:54:22.227409",
+    "reviewer": "human",
+    "edited": false
+  },
+  "39e1d7f9": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "39e1d7f9_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T10:54:51.543316",
+    "reviewer": "human",
+    "edited": false
+  },
+  "447fd412": {
+    "label": "incorrect",
+    "reasoning": "The model fails to recognize that the anchor can also sit vertically relative to the pattern. Somewhat ambiguous in descriptions of how the pattern should be placed relative to the anchor for the generated output.",
+    "file_path": "447fd412_v10_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "C1"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T11:00:51.847931",
+    "reviewer": "human",
+    "edited": true
+  },
+  "668eec9a": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "668eec9a_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T11:01:56.381751",
+    "reviewer": "human",
+    "edited": false
+  },
+  "69889d6e": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "69889d6e_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T11:02:01.264709",
+    "reviewer": "human",
+    "edited": false
+  },
+  "c9680e90": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "c9680e90_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T11:02:12.731709",
+    "reviewer": "human",
+    "edited": false
+  },
+  "da6e95e5": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "da6e95e5_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T11:02:24.798818",
+    "reviewer": "human",
+    "edited": false
+  },
+  "f341894c": {
+    "label": "skipped",
+    "reasoning": "",
+    "file_path": "f341894c_v10_analysis.json",
+    "failure_modes": [],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T11:02:35.598640",
+    "reviewer": "human",
+    "edited": false
+  },
+  "fea12743": {
+    "label": "incorrect",
+    "reasoning": "No other comments. I couldn't even solve this one, but understand enough to notice that the rule from step 2 does not generalize to the puzzle.",
+    "file_path": "fea12743_v10_analysis.json",
+    "failure_modes": [
+      "A1",
+      "A3",
+      "C1"
+    ],
+    "auto_detected": false,
+    "auto_detected_modes": [],
+    "manual_overrides": [],
+    "timestamp": "2026-01-22T11:07:53.204347",
+    "reviewer": "human",
+    "edited": true
+  }
+}
